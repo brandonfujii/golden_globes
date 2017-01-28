@@ -1,4 +1,5 @@
 import csv, codecs
+from tweet import Tweet
 
 # Delimiter for TSV/CSV file.
 DELIM = '\t'
@@ -19,7 +20,11 @@ def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
 				buffer = []
 			else:
 				buffer += line
-		return lines
+		return [line_to_tweet(line) for line in lines]
+
+def line_to_tweet(line):
+	return Tweet(text=line[0], author=line[1], author_id=line[2],
+		tweet_id=line[3], timestamp=line[4])
 
 def read_stopwords(fname=STOPWORD_FILE):
 	try:
