@@ -1,4 +1,4 @@
-import csv
+import csv, codecs
 
 # Delimiter for TSV/CSV file.
 DELIM = '\t'
@@ -7,7 +7,7 @@ STOPWORD_FILE = 'stopwords.txt'
 PHRASES_FILE = "phrases.csv"
 
 def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
-	with open(fname) as fin:
+	with codecs.open(fname, 'r', 'utf8') as fin:
 		cr = csv.reader(fin, delimiter=DELIM)
 		raw_lines = [l for l in cr]
 		lines, buffer = [], []
@@ -24,7 +24,7 @@ def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
 def read_stopwords(fname=STOPWORD_FILE):
 	try:
 		with open(fname) as fin:
-			return [line.strip() for line in fin]
+			return [unicode(line.strip()) for line in fin]
 	except IOError as e:
 		return None
 
