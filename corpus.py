@@ -4,6 +4,7 @@ import csv
 DELIM = '\t'
 TWEETS_FILE = 'goldenglobes.tab'
 STOPWORD_FILE = 'stopwords.txt'
+PHRASES_FILE = "phrases.csv"
 
 def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
 	with open(fname) as fin:
@@ -26,3 +27,11 @@ def read_stopwords(fname=STOPWORD_FILE):
 			return [line.strip() for line in fin]
 	except IOError as e:
 		return None
+
+def read_phrases(fname=PHRASES_FILE, delim=','):
+	with open(fname) as fin:
+		cr = csv.reader(fin, delimiter=DELIM)
+		phrases = []
+		for row in cr:
+			phrases += row
+		return phrases

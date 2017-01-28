@@ -6,7 +6,8 @@
 # 4. Add something special to it
  
 import re
-import tweet_reader as tr
+import corpus as corp
+import util as utilities
 
 
 def naiveSearch(tweets, triggers):
@@ -26,6 +27,8 @@ def findWholeWord(w):
 	return re.compile(r'\b({0})\b'.format(w), flags=re.IGNORECASE).search
 
 
-tweets = tr.read_tweet_file("goldenglobes.tab")
+tweets = corp.read_tweets("goldenglobes.tab")
 
-print naiveSearch(tweets, ["award", "Award"])
+
+for each in naiveSearch(tweets, corp.read_phrases()):
+	print each, '\n'
