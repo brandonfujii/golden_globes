@@ -50,8 +50,8 @@ def tokenize_tweets(tweets):
 
 class Trie(object):
 	def __init__(self, items=None, values=None):
-		self.d = defaultdict(Trie)
-		self.obj = None
+		self.children = defaultdict(Trie)
+		self.value = None
 		if items and values:
 			for item, value in zip(items, values):
 				self.insert(item, value)
@@ -62,8 +62,8 @@ class Trie(object):
 	def __getitem__(self, item):
 		if len(item) == 0:
 			return self
-		elif item[0] in self.d:
-			return self.d[item[0]][item[1:]]
+		elif item[0] in self.children:
+			return self.children[item[0]][item[1:]]
 		else:
 			return None
 
@@ -75,18 +75,28 @@ class Trie(object):
 
 	def __delitem__(self, item):
 		if len(item) == 0:
-			self.d[item[0]].obj = None
+			self.children[item[0]].value = None
 		else:
-			del self.d[item[0]][item[1:]]
-			if len(self.d[item[0]].d) == 0:
-				del self.d[item[0]]
+			del self.children[item[0]][item[1:]]
+			if len(self.children[item[0]].children) == 0:
+				del self.children[item[0]]
 
-	def insert(self, item, obj=None):
-		obj = obj if obj is not None else item
+	def __str__(self):
+		return 'Trie(%s, %s children)' % (self.value, len(self.children))
+
+	def insert(self, item, value=None):
+		value = value if value is not None else item
 		if len(item) == 0:
-			self.obj = obj
+			self.value = value
 		else:
-			self.d[item[0]].insert(item[1:], obj)
+			self.children[item[0]].insert(item[1:], value)
+
+	def walk(self, fn, prefix=None):
+		prefix = prefix if prefix is not None else tuple()
+		fn(self, prefix, self.value)
+		for key in self.children:
+			child = self.children[key]
+			child.walk(fn, prefix + (key,))
 
 def get_best_awards(tweet_toks, cutoff=10):
 	supers = find_superlatives(tweet_toks)
@@ -99,8 +109,8 @@ def get_best_awards(tweet_toks, cutoff=10):
 			break
 	return awards
 
-def make_awards_trie(awards):
-	return Trie(awards, [{} for award in awards])
+def make_awards_trie(awards, default=dict):
+	return Trie(awards, [default() for award in awards])
 
 
 
