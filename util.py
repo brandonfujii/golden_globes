@@ -4,7 +4,7 @@
 import corpus, re
 from collections import defaultdict, Counter
 from lib import twokenize
-from lib.ark_tweet import CMUTweetTagger
+#from lib.ark_tweet import CMUTweetTagger
 
 STOPWORDS = corpus.read_stopwords()
 
@@ -13,9 +13,13 @@ USERPAT = re.compile('@.+')
 
 def is_special(tok):
 	"Return True if tok is a capitalized word, hashtag, user, or stopword."
+	return (tok[0].isupper() and tok[1:].islower()) or tok.lower() in STOPWORDS
+
+"""def is_special(tok):
+	"Return True if tok is a capitalized word, hashtag, user, or stopword."
 	return (tok[0].isupper() and tok[1:].islower() and tok.lower() not in STOPWORDS) or \
 			bool(HASHPAT.match(tok)) or bool(USERPAT.match(tok)) #or \
-			#tok.lower() in STOPWORDS
+			#tok.lower() in STOPWORDS"""
 
 def find_special(toks):
 	"Return a list of lists of words selected by is_special()."
@@ -32,9 +36,9 @@ def find_special(toks):
 	return specials
 
 SUPERLATIVES = ['most', 'least', 'best', 'worst', 'favorite']
-def find_superlatives(tweets):
+def find_superlatives(tweet_toks):
 	supers = []
-	for tweet in tweets:
+	for tweet in tweet_toks:
 		specials = find_special(tweet)
 		for special in specials:
 			if special[0].lower() in SUPERLATIVES:
@@ -91,28 +95,58 @@ class Trie(object):
 		else:
 			self.children[item[0]].insert(item[1:], value)
 
-	def walk(self, fn, prefix=None):
+	def walk(self, fn, direction='down', prefix=None):
+		"""
+		Walk the trie and call fn on it and each of its subtries.
+
+		fn should take three arguments:
+		    trie  - the trie itself
+		    key   - the key of the trie relative to its root
+		    value - the trie's value
+
+		direction can be 'down' (default) or 'up'.  'down'
+		ensures that fn is called on a trie before any of that
+		trie's children.  'up' ensures that fn is called on all
+		of a trie's children before being called on the trie itself.
+		"""
+		if direction != 'down' and direction != 'up':
+			raise ValueError('direction must be "up" or "down"!')
 		prefix = prefix if prefix is not None else tuple()
-		fn(self, prefix, self.value)
+		if direction == 'down':
+			fn(self, prefix, self.value)
 		for key in self.children:
 			child = self.children[key]
-			child.walk(fn, prefix + (key,))
+			child.walk(fn, direction, prefix + (key,))
+		if direction == 'up':
+			fn(self, prefix, self.value)
+
+def trim_trailing_stopwords(toks):
+	index = 0
+	for i in reversed(range(len(toks))):
+		if toks[i] not in STOPWORDS:
+			index = i + 1
+			break
+	return toks[:index]
+
+def get_raw_awards(tweet_toks):
+	supers = find_superlatives(tweet_toks)
+	# Rule: Drop any stopwords from the end of an award.
+	supers = [trim_trailing_stopwords(s) for s in supers]
+	# Rule: Ignore one- or no-word awards.
+	supers = [s for s in supers if len(s) > 1]
+	return supers
 
 def get_best_awards(tweet_toks, cutoff=10):
-	supers = find_superlatives(tweet_toks)
-	c = Counter(supers)
+	awards = get_raw_awards(tweet_toks)
+	c = Counter(awards)
 	awards = []
 	for award, n in c.most_common():
-		if n >= cutoff:
-			awards.append(award)
-		else:
+		if n < cutoff:
 			break
+		awards.append(award)
 	return awards
 
 def make_awards_trie(awards, default=dict):
 	return Trie(awards, [default() for award in awards])
-
-
-
 
 
