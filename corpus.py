@@ -2,8 +2,10 @@ import csv
 
 # Delimiter for TSV/CSV file.
 DELIM = '\t'
+TWEETS_FILE = 'goldenglobes.tab'
+STOPWORD_FILE = 'stopwords.txt'
 
-def read_tweet_file(fname, fields=5):
+def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
 	with open(fname) as fin:
 		cr = csv.reader(fin, delimiter=DELIM)
 		raw_lines = [l for l in cr]
@@ -17,3 +19,7 @@ def read_tweet_file(fname, fields=5):
 			else:
 				buffer += line
 		return lines
+
+def read_stopwords(fname=STOPWORD_FILE):
+	with open(fname) as fin:
+		return [line.strip() for line in fin]
