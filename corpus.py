@@ -21,5 +21,8 @@ def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
 		return lines
 
 def read_stopwords(fname=STOPWORD_FILE):
-	with open(fname) as fin:
-		return [line.strip() for line in fin]
+	try:
+		with open(fname) as fin:
+			return [line.strip() for line in fin]
+	except IOError as e:
+		return None
