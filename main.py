@@ -1,7 +1,7 @@
 # EECS 337: Golden Globes
 
 # 1. Find the names of the hosts
-# 2. For each award, find the name of the winner 
+# 2. For each award, find the name of the winner (check if winner was nominated as well)
 # 3. For each award, find the name of the presenter(s)
 # 4. Add something special to it
  
@@ -10,6 +10,9 @@ from corpus import *
 from util import *
 import pickle, os
 import csv
+from nltk.corpus import wordnet as wn
+from nltk.tag import pos_tag
+import wikipedia as wiki
 
 ##Globals Housing tweets and award data###
 tweets = None
@@ -72,6 +75,28 @@ def main():
 		win_triggers = [phrase for phrase in csv.reader(phrases_csv)]
 
 	winner_related_tweets = identifyAwardWinners(award_bins, win_triggers) #Returns a award_bins that contain only tweets filtered to be related to the winners of that award
+	blacklist = ["Golden", "Globes", "SeriesTV", "TVSeries", "Series", "TV", "Congrats", "Congratulations", "Movie", "Limited"]
+	
+	for award in winner_related_tweets:
+		for tweet in winner_related_tweets[award]:
+			words = filter(None, strip_tweet(tweet.text).split(" "))
+			proper_nouns = find_entities(words)
+			filtered_nouns = [noun for noun in proper_nouns if noun not in award and noun not in blacklist]
+
+			if (len(filtered_nouns)):
+				try:
+					winner = wiki.page(" ".join(filtered_nouns))
+					print "Winner:", winner.title
+				except (wiki.exceptions.DisambiguationError, wiki.exceptions.PageError):
+					print "Could not find a wikipedia page for this the query", " ".join(filtered_nouns)
+
+def find_entities(words):
+	""" Given a list of words, returns a list of proper nouns contained within the list """
+	tagged_words = pos_tag(words)
+	return [word for word, pos in tagged_words if pos == 'NNP']
+
+def strip_tweet(tweet):
+  return ' '.join(re.sub("(RT)|(@[A-Za-z0-9]+)|(#[A-Za-z0-9]+)|([^0-9A-Za-z \t])", "", tweet).split(' ')).strip()
 
 ##Code for Pickling##
 def save(dObj, sFilename):
