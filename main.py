@@ -9,6 +9,7 @@ import re
 from corpus import *
 from util import *
 import pickle, os
+import csv
 
 ##Globals Housing tweets and award data###
 tweets = None
@@ -24,23 +25,20 @@ def naiveSearch(tweets, triggers):
 
 	for tweet in tweets:
 		for key in triggers:
-			if findWholeWord(key)(tweet[0]):
-				matchingTweets.append(tweet[0])
+			if findWholeWord(key)(tweet.text):
+				matchingTweets.append(tweet)
 
 	return matchingTweets
 
 def findWholeWord(w):
 	return re.compile(r'\b({0})\b'.format(w), flags=re.IGNORECASE).search
 
-
-#tweets = read_tweets("goldenglobes.tab")
-
-
-##for each in naiveSearch(tweets, corp.read_phrases()):
-##	print each, '\n'
-
-
-##Loads Award Bins from Save File##
+def identifyAwardWinners(award_bins, win_triggers):
+	award_winners = {}
+	for award in award_bins:
+		award_winners[award] = naiveSearch(award_bins[award], win_triggers)
+	return award_winners
+		
 def main():
 	global tweets 
 	global raw_awards 
@@ -57,7 +55,7 @@ def main():
 		best_awards = load('best_awards.dat')
 		raw_awards = load('raw_awards.dat')
 		tweets = load('tweets.dat')
-		print "Did as intended"
+		print("Did as intended")
 	else:
 		tweets = read_tweets()
 		tokenize_tweets(tweets)
@@ -69,6 +67,11 @@ def main():
 		save(best_awards, 'best_awards.dat')
 		save(raw_awards, 'raw_awards.dat')
 		save(tweets, 'tweets.dat')
+
+	with open('phrases.csv') as phrases_csv:
+		win_triggers = [phrase for phrase in csv.reader(phrases_csv)]
+
+	winner_related_tweets = identifyAwardWinners(award_bins, win_triggers) #Returns a award_bins that contain only tweets filtered to be related to the winners of that award
 
 ##Code for Pickling##
 def save(dObj, sFilename):
