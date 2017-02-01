@@ -12,6 +12,7 @@ from lib import twokenize
 # Custom code
 from tweet import Tweet
 from trie import Trie
+from lib.
 
 ## GLOBALS ##
 
@@ -25,7 +26,7 @@ USERPAT = re.compile('@.+')
 # List of words that can start an award phrase.
 SUPERLATIVES = ['most', 'least', 'best', 'worst', 'favorite']
 
-## TOKENIZATION ##
+## TOKENIZATION AND TAGGING ##
 
 def tokenize(text):
 	return twokenize.tokenizeRawTweetText(text)
