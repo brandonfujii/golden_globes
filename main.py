@@ -102,7 +102,10 @@ def main():
 				if query in wiki_cache:
 					if wiki_cache[query]:
 						try:
-							entity_frequencies[award][wiki_cache[query]] += 1
+							if wiki_cache[query] not in entity_frequencies[award]:
+								entity_frequencies[award][wiki_cache[query]] = 1
+							else:
+								entity_frequencies[award][wiki_cache[query]] += 1
 						except Exception as e:
 							print entity_frequencies[award].keys()
 							print "Wiki Cache: ", wiki_cache
