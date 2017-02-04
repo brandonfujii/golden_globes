@@ -9,6 +9,35 @@ JAR_PATH = 'lib/ark-tweet-nlp-0.3.2-mod.jar' # Modified build that fixes the std
 JAR_ARGS = '--input-format text --output-format pretsv --no-confidence'
 JAR_CMD = 'java -XX:ParallelGCThreads=2 -Xmx500m -jar %s %s' % (JAR_PATH, JAR_ARGS)
 
+# Taken from table in https://www.cs.cmu.edu/~ark/TweetNLP/owoputi+etal.naacl13.pdf
+POS_GUIDE = {
+	'N':	'common noun',
+	'O':	'pronoun (personal/WH; not possessive)',
+	'^':	'proper noun',
+	'S':	'nominal + possessive',
+	'Z':	'proper noun + possessive',
+	'V':	'verb including copula, auxiliaries',
+	'L':	'nominal + verbal (e.g. I’m), verbal + nominal (let’s)',
+	'M':	'proper noun + verbal',
+	'A':	'adjective',
+	'R':	'adverb',
+	'!':	'interjection',
+	'D':	'determiner',
+	'P':	'pre- or postposition, or subordinating conjunction',
+	'&':	'coordinating conjunction',
+	'T':	'verb particle',
+	'X':	'existential there, predeterminers',
+	'Y':	'X + verbal',
+	'#':	'hashtag (indicates topic/category for tweet)',
+	'@':	'at-mention (indicates a user as a recipient of a tweet)',
+	'~':	'discourse  marker,  indications  of  continuation  across multiple tweets',
+	'U':	'URL or email address',
+	'E':	'emoticon',
+	'$':	'numeral',
+	',':	'punctuation',
+	'G':	'other abbreviations, foreign words, possessive endings, symbols, garbage'
+}
+
 class TweetTagger(object):
 	def __init__(self, cmd=JAR_CMD):
 		self.cmd = cmd
