@@ -9,7 +9,7 @@ PHRASES_FILE = "phrases.csv"
 
 def read_tweets(fname=TWEETS_FILE, fields=5, delim=DELIM):
 	with codecs.open(fname, 'r', 'utf8') as fin:
-		cr = csv.reader(fin, delimiter=DELIM)
+		cr = csv.reader(fin, delimiter=DELIM, quotechar=None)
 		raw_lines = [l for l in cr]
 		lines, buffer = [], []
 		for line in raw_lines:

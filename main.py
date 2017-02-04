@@ -10,6 +10,7 @@ from corpus import *
 from util import *
 import pickle, os
 import csv
+import nltk
 from nltk.corpus import wordnet as wn
 from nltk.tag import pos_tag
 import wikipedia as wiki
@@ -84,6 +85,7 @@ def main():
 		entity_frequencies = load('entityFrequencies.txt')
 	else:
 		entity_frequencies = genEntityFrequencies(winner_related_tweets)
+	
 	winners = decideWinners(entity_frequencies)
 	for award in winners:
 		print ' '.join(award),": " ,winners[award]
@@ -171,7 +173,6 @@ def genEntityFrequencies(winner_related_tweets):
 
 def find_entities(words):
 	""" Given a list of words, returns a list of proper nouns contained within the list """
-	tagged_words = pos_tag(words)
 	return [word for word, pos in tagged_words if pos == 'NNP']
 
 def strip_tweet(tweet):
