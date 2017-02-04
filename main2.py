@@ -50,7 +50,6 @@ def main():
 	tweets = load_or_create('tweets.dat', read_tweets)
 	process_tweets(tweets)
 	save(tweets, 'tweets.dat')
-	save(ENTITIES, 'entities.dat')
 	raw_awards = load_or_create('raw_awards.dat', get_raw_awards, tweets)
 	best_awards = load_or_create('best_awards.dat', get_best_awards, raw_awards)
 	award_bins = load_or_create('award_bins.dat', assign_awards, tweets, best_awards)
@@ -66,6 +65,8 @@ def main():
 		for tweet in winner_related_tweets[award]:
 			entity_frequencies[award].update([canonicalize(entity) for entity in tweet.entities])
 	print entity_frequencies
+	save(ENTITIES, 'entities.dat')
+
 	return entity_frequencies
 
 if __name__ == '__main__':
