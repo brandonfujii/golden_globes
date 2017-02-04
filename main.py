@@ -13,6 +13,7 @@ import csv
 from nltk.corpus import wordnet as wn
 from nltk.tag import pos_tag
 import wikipedia as wiki
+import operator
 
 ##Globals Housing tweets and award data###
 tweets = None
@@ -83,7 +84,23 @@ def main():
 		entity_frequencies = load('entityFrequencies.txt')
 	else:
 		entity_frequencies = genEntityFrequencies(winner_related_tweets)
-	print entity_frequencies
+	winners = decideWinners(entity_frequencies)
+	for award in winners:
+		print ' '.join(award),": " ,winners[award]
+
+def decideWinners(entity_frequencies):
+	winners = {}
+	for award in entity_frequencies:
+		maxKey = None
+		maxVal = float("-inf")
+		for candidate in entity_frequencies[award]:
+			if entity_frequencies[award][candidate] > maxVal:
+				maxVal = entity_frequencies[award][candidate]
+				maxKey = candidate
+		winners[award] = maxKey
+		#maximum = max(entity_frequencies[award].iteritems(), key=operator.itemgetter(1))[0]  
+		#winners[award] = maximum
+	return winners
 
 def genEntityFrequencies(winner_related_tweets):
 
