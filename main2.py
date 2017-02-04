@@ -43,18 +43,14 @@ def identifyAwardWinners(award_bins, win_triggers):
 		award_winners[award] = naiveSearch(award_bins[award], win_triggers)
 	return award_winners
 
-def load_or_create(fname, fn, *args):
-	if os.path.exists(fname):
-		return load(fname)
-	obj = fn(*args)
-	save(obj, fname)
-	return obj
-	
 def main():
-	global tweets, raw_awards, best_awards, award_bins
+	global tweets, raw_awards, best_awards, award_bins, ENTITIES
 
+	ENTITIES = load_or_create('entities.dat', dict)
 	tweets = load_or_create('tweets.dat', read_tweets)
 	process_tweets(tweets)
+	save(tweets, 'tweets.dat')
+	save(ENTITIES, 'entities.dat')
 	raw_awards = load_or_create('raw_awards.dat', get_raw_awards, tweets)
 	best_awards = load_or_create('best_awards.dat', get_best_awards, raw_awards)
 	award_bins = load_or_create('award_bins.dat', assign_awards, tweets, best_awards)
@@ -68,27 +64,9 @@ def main():
 	for award in winner_related_tweets:
 		entity_frequencies[award] = Counter()
 		for tweet in winner_related_tweets[award]:
-			entity_frequencies[award].update(tweet.entities)
+			entity_frequencies[award].update([canonicalize(entity) for entity in tweet.entities])
 	print entity_frequencies
 	return entity_frequencies
-
-##Code for Pickling##
-def save(dObj, sFilename):
-  """Given an object and a file name, write the object to the file using pickle."""
-
-  f = open(sFilename, "w")
-  p = pickle.Pickler(f)
-  p.dump(dObj)
-  f.close()
-
-def load(sFilename):
-  """Given a file name, load and return the object stored in the file."""
-
-  f = open(sFilename, "r")
-  u = pickle.Unpickler(f)
-  dObj = u.load()
-  f.close()
-  return dObj
 
 if __name__ == '__main__':
 	main()

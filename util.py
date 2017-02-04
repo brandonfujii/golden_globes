@@ -2,7 +2,7 @@
 # Various utilities for our system.
 
 # Built-in
-import corpus, re, sys
+import corpus, re, sys, os, pickle
 from collections import defaultdict, Counter
 
 # Libraries
@@ -41,6 +41,30 @@ ENTITIES = {}
 def debug(msg):
 	if DEBUG:
 		sys.stderr.write('%s\n' % msg)
+
+## PICKLING ##
+
+def save(dObj, sFilename):
+  """Given an object and a file name, write the object to the file using pickle."""
+  f = open(sFilename, "w")
+  p = pickle.Pickler(f)
+  p.dump(dObj)
+  f.close()
+
+def load(sFilename):
+  """Given a file name, load and return the object stored in the file."""
+  f = open(sFilename, "r")
+  u = pickle.Unpickler(f)
+  dObj = u.load()
+  f.close()
+  return dObj
+
+def load_or_create(fname, fn, *args):
+	if os.path.exists(fname):
+		return load(fname)
+	obj = fn(*args)
+	save(obj, fname)
+	return obj
 
 ## TWEET PROCESSING ##
 
@@ -105,7 +129,7 @@ def find_entities(toks, tags):
 			entities[-1].append(tok)
 		else:
 			make_new = True
-	return [canonicalize(' '.join(entity)) for entity in entities]
+	return [' '.join(entity) for entity in entities]
 
 """def assign_entities(tweets, override=False):
 	for i, tweet in enumerate(tweets):
