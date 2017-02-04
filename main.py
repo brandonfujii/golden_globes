@@ -19,6 +19,7 @@ tweets = None
 raw_awards = None
 best_awards = None
 award_bins = None
+entity_frequencies = None
 
 def naiveSearch(tweets, triggers):
   	"""
@@ -47,6 +48,7 @@ def main():
 	global raw_awards 
 	global best_awards
 	global award_bins
+	global entity_frequencies
 
 	lFileList = []
 	for fFileObj in os.walk(os.getcwd()): #Checks to see what files are in the current working directory
@@ -71,10 +73,20 @@ def main():
 		save(raw_awards, 'raw_awards.dat')
 		save(tweets, 'tweets.dat')
 
+
 	with open('phrases.csv') as phrases_csv:
 		win_triggers = [phrase for phrase in csv.reader(phrases_csv)]
 
 	winner_related_tweets = identifyAwardWinners(award_bins, win_triggers) #Returns a award_bins that contain only tweets filtered to be related to the winners of that award
+
+	if ('entityFrequencies.txt' in lFileList):
+		entity_frequencies = load('entityFrequencies.txt')
+	else:
+		entity_frequencies = genEntityFrequencies(winner_related_tweets)
+	print entity_frequencies
+
+def genEntityFrequencies(winner_related_tweets):
+
 	blacklist = ["Golden", "Globes", "SeriesTV", "TVSeries", "Series", "TV", "Congrats", "Congratulations", "Movie", "Limited"]
 	entity_frequencies = {}
 
@@ -138,7 +150,7 @@ def main():
 						print "Could not find a wikipedia page for this query", " ".join(filtered_nouns)
 						wiki_cache[query] = None
 		
-	print entity_frequencies
+	return entity_frequencies
 
 def find_entities(words):
 	""" Given a list of words, returns a list of proper nouns contained within the list """
