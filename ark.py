@@ -69,4 +69,4 @@ class TweetTagger(object):
 			raise Error('Unexpected number of tabs in tweet output!')
 		tokens, tags, text = line.split('\t')
 		tweet.tokens = tokens.split()
-		tweet.poses = tags.split()
+		tweet.tags = tags.split()

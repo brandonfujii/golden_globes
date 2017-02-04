@@ -10,6 +10,7 @@ from corpus import *
 from util import *
 import pickle, os
 import csv
+from collections import defaultdict
 from nltk.corpus import wordnet as wn
 from nltk.tag import pos_tag
 import wikipedia as wiki
@@ -78,6 +79,8 @@ def main():
 	blacklist = ["Golden", "Globes", "SeriesTV", "TVSeries", "Series", "TV", "Congrats", "Congratulations", "Movie", "Limited"]
 	entity_frequencies = {}
 
+	total_tweets = sum(len(winner_related_tweets[award]) for award in winner_related_tweets)
+	total_counter = 1
 	award_counter = 1
 	wiki_cache = {}
 	for award in winner_related_tweets:
@@ -86,12 +89,14 @@ def main():
 		print "Award: %s - %s / %s" % (award, award_counter, len(winner_related_tweets))
 		award_counter += 1
 
-		entity_frequencies[award] = {}
+		entity_frequencies[award] = defaultdict(int)
 
 		for tweet in winner_related_tweets[award]:
 
-			print "Tweet Number: %s / %s" % (tweet_counter, len(winner_related_tweets[award]))
+			if tweet_counter % 100 == 0:
+				print "Tweet Number: %s / %s [%s / %s]" % (tweet_counter, len(winner_related_tweets[award]), total_counter, total_tweets)
 			tweet_counter += 1
+			total_counter += 1
 
 			words = strip_tweet(tweet)
 			proper_nouns = find_entities(words)
@@ -101,44 +106,23 @@ def main():
 				query = " ".join(filtered_nouns)
 				if query in wiki_cache:
 					if wiki_cache[query]:
-						try:
-							if wiki_cache[query] not in entity_frequencies[award]:
-								entity_frequencies[award][wiki_cache[query]] = 1
-							else:
-								entity_frequencies[award][wiki_cache[query]] += 1
-						except Exception as e:
-							print entity_frequencies[award].keys()
-							print "Wiki Cache: ", wiki_cache
-							print "Query: ", query
-							raise e
-
+						entity_frequencies[award][wiki_cache[query]] += 1
 				else:
 					try:
 						winner = wiki.page(query)
-
-
-						if winner.title not in entity_frequencies[award]:
-							entity_frequencies[award][winner.title] = 1
-							wiki_cache[query] = winner.title
-						else:
-							entity_frequencies[award][winner.title] += 1
-							wiki_cache[query] = winner.title
+						entity_frequencies[award][winner.title] += 1
+						wiki_cache[query] = winner.title
 						print "Successfully found a wikipedia page pertaining to this query", winner.title.encode('utf-8')
-						
-
-						if winner.title == 'Drama':
-							print "OK: Here is the Query: ", query
-							print entity_frequencies[award].keys()
-						
 					except (wiki.exceptions.DisambiguationError, wiki.exceptions.PageError, wiki.exceptions.WikipediaException) as e:
-						if isinstance(e, wiki.exceptions.WikipediaException):
+						if isinstance(e, wiki.exceptions.WikipediaException) and \
+							not isinstance(e, wiki.exceptions.DisambiguationError) and \
+							not isinstance(e, wiki.exceptions.PageError):
 							print "Unknown error occurred for ", query.encode('utf-8'), e
-
-
-						print "Could not find a wikipedia page for this query", " ".join(filtered_nouns)
+						print "Could not find a wikipedia page for this query", query
 						wiki_cache[query] = None
 		
 	print entity_frequencies
+	return entity_frequencies
 
 def find_entities(words):
 	""" Given a list of words, returns a list of proper nouns contained within the list """

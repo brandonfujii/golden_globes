@@ -2,11 +2,12 @@
 # Various utilities for our system.
 
 # Built-in
-import corpus, re
+import corpus, re, sys
 from collections import defaultdict, Counter
 
 # Libraries
 from lib import twokenize
+import wikipedia as wiki
 #from lib.ark_tweet import CMUTweetTagger
 
 # Custom code
@@ -15,6 +16,12 @@ from trie import Trie
 from ark import TweetTagger
 
 ## GLOBALS ##
+
+# Whether to print debug statements.
+DEBUG = True
+
+# How often to print debug statements when looping over tweets.
+DEBUG_FREQ = 100
 
 # List of stopwords, read in automatically.
 STOPWORDS = corpus.read_stopwords()
@@ -26,21 +33,84 @@ USERPAT = re.compile('@.+')
 # List of words that can start an award phrase.
 SUPERLATIVES = ['most', 'least', 'best', 'worst', 'favorite']
 
+# Entity mappings discovered so far.
+ENTITIES = {}
+
+## DEBUGGING ##
+
+def debug(msg):
+	if DEBUG:
+		sys.stderr.write('%s\n' % msg)
+
+## TWEET PROCESSING ##
+
+def process_tweet(tweet, tagger):
+	# tweet.tokens = tweet.tokens or tokenize(tweet.text) # Done better by tag_tweet()
+	if not tweet.tags:
+		tagger.tag_tweet(tweet)
+	tweet.entities = tweet.entities or find_entities(tweet.tokens, tweet.tags)
+	tweet.phrases = tweet.phrases or find_phrases(tweet.tokens)
+
+def process_tweets(tweets):
+	with TweetTagger() as tt:
+		tweet_count = len(tweets)
+		for i, tweet in enumerate(tweets):
+			if i % DEBUG_FREQ == 0:
+				debug('Processing tweet %s / %s' % (i, tweet_count))
+			process_tweet(tweet, tt)
+
 ## TOKENIZATION AND TAGGING ##
 
 def tokenize(text):
 	return twokenize.tokenizeRawTweetText(text)
 
-def tokenize_tweets(tweets):
+"""def tokenize_tweets(tweets, override=False):
 	# Takes 30-60 seconds on my computer.
-	for tweet in tweets:
-		tweet.tokens = tokenize(tweet.text)
+	for i, tweet in enumerate(tweets):
+		if not tweet.tokens or override:
+			tweet.tokens = tokenize(tweet.text)"""
 
-def tag_tweets(tweets):
+"""def tag_tweets(tweets, override=False):
 	# Takes the place of tokenization.
 	with TweetTagger() as tt:
 		for tweet in tweets:
-			tt.tag_tweet(tweet)
+			if not tweet.tags or override:
+				tt.tag_tweet(tweet)"""
+
+## ENTITY RECOGNITION ##
+
+def canonicalize(entity):
+	if entity not in ENTITIES:
+		try:
+			winner = wiki.page(entity)
+			ENTITIES[entity] = winner.title
+			debug('Successfully found a wikipedia page pertaining to this query %s' % winner.title.encode('utf-8'))
+		except wiki.exceptions.WikipediaException as e:
+			if not isinstance(e, wiki.exceptions.DisambiguationError) and \
+				not isinstance(e, wiki.exceptions.PageError):
+				debug('Unknown error occurred for: %s' % entity.encode('utf-8'))
+			ENTITIES[entity] = None
+			debug('Could not find a wikipedia page for this query %s' % entity)
+	return ENTITIES[entity]
+
+def find_entities(toks, tags):
+	"Return a list of entities (consecutive proper nouns) found in the tweet."
+	entities = []
+	make_new = True
+	for tok, tag in zip(toks, tags):
+		if tag == '^':
+			if make_new:
+				entities.append([])
+				make_new = False
+			entities[-1].append(tok)
+		else:
+			make_new = True
+	return [canonicalize(' '.join(entity)) for entity in entities]
+
+"""def assign_entities(tweets, override=False):
+	for i, tweet in enumerate(tweets):
+		if not tweet.entities or override:
+			tweet.entities = find_entities(tweet)"""
 
 ## PHRASES ##
 
@@ -76,9 +146,10 @@ def trim_trailing_stopwords(toks):
 			break
 	return toks[:index]
 
-def assign_phrases(tweets):
+"""def assign_phrases(tweets, override=False):
 	for tweet in tweets:
-		tweet.phrases = find_phrases(tweet.tokens)
+		if not tweet.phrases or override:
+			tweet.phrases = find_phrases(tweet.tokens)"""
 
 ## AWARDS ##
 

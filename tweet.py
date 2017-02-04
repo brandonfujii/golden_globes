@@ -14,7 +14,8 @@ class Tweet(object):
 		self.timestamp = timestamp
 
 		self.tokens = []
-		self.poses = []
+		self.tags = []
+		self.entities = []
 		self.phrases = []
 		self.awards = []
 
