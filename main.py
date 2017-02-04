@@ -76,19 +76,57 @@ def main():
 
 	winner_related_tweets = identifyAwardWinners(award_bins, win_triggers) #Returns a award_bins that contain only tweets filtered to be related to the winners of that award
 	blacklist = ["Golden", "Globes", "SeriesTV", "TVSeries", "Series", "TV", "Congrats", "Congratulations", "Movie", "Limited"]
-	
+	entity_frequencies = {}
+
+	award_counter = 1
+	wiki_cache = {}
 	for award in winner_related_tweets:
+
+		tweet_counter = 1
+		print "Award: %s - %s / %s" % (award, award_counter, len(winner_related_tweets))
+		award_counter += 1
+
+		entity_frequencies[award] = {}
 		for tweet in winner_related_tweets[award]:
-			words = filter(None, strip_tweet(tweet.text).split(" "))
+
+			print "Tweet Number: %s / %s" % (tweet_counter, len(winner_related_tweets[award]))
+			tweet_counter += 1
+
+			words = strip_tweet(tweet)
 			proper_nouns = find_entities(words)
 			filtered_nouns = [noun for noun in proper_nouns if noun not in award and noun not in blacklist]
 
 			if (len(filtered_nouns)):
-				try:
-					winner = wiki.page(" ".join(filtered_nouns))
-					print "Winner:", winner.title
-				except (wiki.exceptions.DisambiguationError, wiki.exceptions.PageError):
-					print "Could not find a wikipedia page for this the query", " ".join(filtered_nouns)
+				query = " ".join(filtered_nouns)
+				if query in wiki_cache:
+					if wiki_cache[query]:
+						try:
+							entity_frequencies[award][wiki_cache[query]] += 1
+						except Exception as e:
+							print entity_frequencies[award].keys()
+							print "Wiki Cache: ", wiki_cache
+							print "Query: ", query
+							raise e
+
+				else:
+					try:
+						winner = wiki.page(query)
+						if winner.title not in entity_frequencies[award]:
+							entity_frequencies[award][winner.title] = 1
+						else:
+							entity_frequencies[award][winner.title] += 1
+						print "Successfully found a wikipedia page pertaining to this query", winner.title.encode('utf-8')
+						wiki_cache[query] = winner.title
+						
+					except (wiki.exceptions.DisambiguationError, wiki.exceptions.PageError, wiki.exceptions.WikipediaException) as e:
+						if isinstance(e, wiki.exceptions.WikipediaException):
+							print "Unknown error occurred for ", query.encode('utf-8'), e
+
+
+						print "Could not find a wikipedia page for this query", " ".join(filtered_nouns)
+						wiki_cache[query] = None
+		
+	print entity_frequencies
 
 def find_entities(words):
 	""" Given a list of words, returns a list of proper nouns contained within the list """
@@ -96,7 +134,8 @@ def find_entities(words):
 	return [word for word, pos in tagged_words if pos == 'NNP']
 
 def strip_tweet(tweet):
-  return ' '.join(re.sub("(RT)|(@[A-Za-z0-9]+)|(#[A-Za-z0-9]+)|([^0-9A-Za-z \t])", "", tweet).split(' ')).strip()
+	return [tok for tok in tweet.tokens if tok.upper() != 'RT' and tok[0] != '#' and tok[0] != '@']
+  #return ' '.join(re.sub("(RT)|(@[A-Za-z0-9]+)|(#[A-Za-z0-9]+)|([^0-9A-Za-z \t])", "", tweet).split(' ')).strip()
 
 ##Code for Pickling##
 def save(dObj, sFilename):
