@@ -87,6 +87,7 @@ def main():
 		award_counter += 1
 
 		entity_frequencies[award] = {}
+
 		for tweet in winner_related_tweets[award]:
 
 			print "Tweet Number: %s / %s" % (tweet_counter, len(winner_related_tweets[award]))
@@ -111,12 +112,20 @@ def main():
 				else:
 					try:
 						winner = wiki.page(query)
+
+
 						if winner.title not in entity_frequencies[award]:
 							entity_frequencies[award][winner.title] = 1
+							wiki_cache[query] = winner.title
 						else:
 							entity_frequencies[award][winner.title] += 1
+							wiki_cache[query] = winner.title
 						print "Successfully found a wikipedia page pertaining to this query", winner.title.encode('utf-8')
-						wiki_cache[query] = winner.title
+						
+
+						if winner.title == 'Drama':
+							print "OK: Here is the Query: ", query
+							print entity_frequencies[award].keys()
 						
 					except (wiki.exceptions.DisambiguationError, wiki.exceptions.PageError, wiki.exceptions.WikipediaException) as e:
 						if isinstance(e, wiki.exceptions.WikipediaException):
