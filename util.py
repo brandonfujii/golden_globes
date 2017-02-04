@@ -12,6 +12,7 @@ from lib import twokenize
 # Custom code
 from tweet import Tweet
 from trie import Trie
+from ark import TweetTagger
 
 ## GLOBALS ##
 
@@ -25,7 +26,7 @@ USERPAT = re.compile('@.+')
 # List of words that can start an award phrase.
 SUPERLATIVES = ['most', 'least', 'best', 'worst', 'favorite']
 
-## TOKENIZATION ##
+## TOKENIZATION AND TAGGING ##
 
 def tokenize(text):
 	return twokenize.tokenizeRawTweetText(text)
@@ -34,6 +35,12 @@ def tokenize_tweets(tweets):
 	# Takes 30-60 seconds on my computer.
 	for tweet in tweets:
 		tweet.tokens = tokenize(tweet.text)
+
+def tag_tweets(tweets):
+	# Takes the place of tokenization.
+	with TweetTagger() as tt:
+		for tweet in tweets:
+			tt.tag_tweet(tweet)
 
 ## PHRASES ##
 
