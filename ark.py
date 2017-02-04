@@ -17,7 +17,7 @@ POS_GUIDE = {
 	'S':	'nominal + possessive',
 	'Z':	'proper noun + possessive',
 	'V':	'verb including copula, auxiliaries',
-	'L':	'nominal + verbal (e.g. I’m), verbal + nominal (let’s)',
+	'L':	'nominal + verbal (e.g. I\'m), verbal + nominal (let\'s)',
 	'M':	'proper noun + verbal',
 	'A':	'adjective',
 	'R':	'adverb',
