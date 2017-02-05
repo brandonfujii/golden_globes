@@ -44,9 +44,9 @@ def identifyAwardWinners(award_bins, win_triggers):
 	return award_winners
 
 def main():
-	global tweets, raw_awards, best_awards, award_bins, ENTITIES
+	global tweets, raw_awards, best_awards, award_bins, entities
 
-	ENTITIES = load_or_create('entities.dat', dict)
+	entities = load_or_create('entities.dat', dict)
 	tweets = load_or_create('tweets.dat', read_tweets)
 	process_tweets(tweets)
 	save(tweets, 'tweets.dat')
@@ -63,9 +63,9 @@ def main():
 	for award in winner_related_tweets:
 		entity_frequencies[award] = Counter()
 		for tweet in winner_related_tweets[award]:
-			entity_frequencies[award].update([canonicalize(entity) for entity in tweet.entities])
+			entity_frequencies[award].update([canonicalize(entity, entities) for entity in tweet.entities])
 	print entity_frequencies
-	save(ENTITIES, 'entities.dat')
+	save(entities, 'entities.dat')
 
 	return entity_frequencies
 

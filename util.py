@@ -33,9 +33,6 @@ USERPAT = re.compile('@.+')
 # List of words that can start an award phrase.
 SUPERLATIVES = ['most', 'least', 'best', 'worst', 'favorite']
 
-# Entity mappings discovered so far.
-ENTITIES = {}
-
 ## DEBUGGING ##
 
 def debug(msg):
@@ -103,19 +100,24 @@ def tokenize(text):
 
 ## ENTITY RECOGNITION ##
 
-def canonicalize(entity):
-	if entity not in ENTITIES:
+def canonicalize(entity, entities=None):
+	if entities is None:
+		entities = {}
+	entity = entity.lower()
+	if '#' in entity or '@' in entity:
+		return None
+	if entity not in entities:
 		try:
 			winner = wiki.page(entity)
-			ENTITIES[entity] = winner.title
+			entities[entity] = winner.title
 			debug('Successfully found a wikipedia page pertaining to this query %s' % winner.title.encode('utf-8'))
 		except wiki.exceptions.WikipediaException as e:
 			if not isinstance(e, wiki.exceptions.DisambiguationError) and \
 				not isinstance(e, wiki.exceptions.PageError):
 				debug('Unknown error occurred for: %s' % entity.encode('utf-8'))
-			ENTITIES[entity] = None
+			entities[entity] = None
 			debug('Could not find a wikipedia page for this query %s' % entity)
-	return ENTITIES[entity]
+	return entities[entity]
 
 def find_entities(toks, tags):
 	"Return a list of entities (consecutive proper nouns) found in the tweet."
