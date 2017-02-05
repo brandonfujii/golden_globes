@@ -67,7 +67,25 @@ def main():
 	print entity_frequencies
 	save(entities, 'entities.dat')
 
-	return entity_frequencies
+	winners = decideWinners(entity_frequencies)
+	for award in winners:
+		print ' '.join(award),": " ,winners[award]
+
+	#return entity_frequencies
+def decideWinners(entity_frequencies):
+	winners = {}
+	for award in entity_frequencies:
+		maxKey = None
+		maxVal = float("-inf")
+		for candidate in entity_frequencies[award]:
+			if candidate:
+				if entity_frequencies[award][candidate] > maxVal:
+					maxVal = entity_frequencies[award][candidate]
+					maxKey = candidate
+		winners[award] = maxKey
+		#maximum = max(entity_frequencies[award].iteritems(), key=operator.itemgetter(1))[0]  
+		#winners[award] = maximum
+	return winners
 
 if __name__ == '__main__':
 	main()
