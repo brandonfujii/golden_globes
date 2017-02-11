@@ -98,9 +98,9 @@ def main():
 
 
 	nominees = decideNominees(nominee_entity_frequencies)
+	nominees = filterNominees(nominees)
 	for award in nominees:
 		print ' '.join(award),": " ,nominees[award]
-
 
 	#return entity_frequencies
 def decideNominees(nominee_entity_frequencies):
@@ -114,9 +114,44 @@ def decideNominees(nominee_entity_frequencies):
 		nominees[award] = []
 		for key in orderedNomineeKeys[award][0]:
 			if (float(nominee_entity_frequencies[award][key])/float(orderedNomineeKeys[award][1])) > .1:
-				nominees[award].append([key, nominee_entity_frequencies[award][key], orderedNomineeKeys[award][1]])  
+				nominees[award].append(key)  
 
 	return nominees
+
+
+def filterNominees(nominees):
+	triggers = {
+		"actor" : ["actor"],
+		"actress" : ["actress"],
+		"film" : ["film", "movie"],
+		"tv" : ["tv", "television", "show"],
+		"series" : ["miniseries", "series", 'mini-series']
+	}
+	
+	new_nominees = {}
+	for award in nominees:
+		new_nominees[award] = []
+		toBreak = False 
+		for key in triggers:
+			if toBreak:
+				break
+			for term in triggers[key]:
+				if findWholeWord(term)(' '.join(award)):
+					wikiQuery(nominees, new_nominees, award, key)
+					toBreak = True
+					break
+	return new_nominees
+
+def wikiQuery(nominees, new_nominees, award, appendWord):
+	for entity in nominees[award]:
+		try: 
+			if entity:
+				page = wiki.page(entity + " " + appendWord)
+				new_nominees[award].append(page.title)
+		except wiki.exceptions.WikipediaException as e: 
+			if not isinstance(e, wiki.exceptions.DisambiguationError) and \
+			not isinstance(e, wiki.exceptions.PageError):
+				print "Unknown error occurred"
 
 def decideWinners(entity_frequencies):
 	winners = {}
