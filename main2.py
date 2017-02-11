@@ -30,6 +30,7 @@ def naiveSearch(tweets, triggers):
 	for tweet in tweets:
 		for key in triggers:
 			if findWholeWord(key)(tweet.text):
+				print "key word: ", key, "tweet text: ", tweet.text
 				matchingTweets.append(tweet)
 
 	return matchingTweets
@@ -42,36 +43,81 @@ def identifyAwardWinners(award_bins, win_triggers):
 	for award in award_bins:
 		award_winners[award] = naiveSearch(award_bins[award], win_triggers)
 	return award_winners
+def seperateWinnersNominees(award_bins, winner_award_bins):
+	nominee_award_bin = {}
+	for award in award_bins:
+		if set(award_bins[award]) == set(winner_award_bins[award]):
+			print "Trouble in paradise"
+		nominee_award_bin[award] = list(set(award_bins[award]) - set(winner_award_bins[award]))
+	return nominee_award_bin
 
 def main():
 	global tweets, raw_awards, best_awards, award_bins, entities
 
-	entities = load_or_create('entities.dat', dict)
+	winner_entities = load_or_create('winner_entities.dat', dict)
+	nominee_entities = load_or_create('nominee_entities.dat', dict)
+
 	tweets = load_or_create('tweets.dat', read_tweets)
 	process_tweets(tweets)
 	save(tweets, 'tweets.dat')
+
 	raw_awards = load_or_create('raw_awards.dat', get_raw_awards, tweets)
 	best_awards = load_or_create('best_awards.dat', get_best_awards, raw_awards)
 	award_bins = load_or_create('award_bins.dat', assign_awards, tweets, best_awards)
 
 	with open('phrases.csv') as phrases_csv:
-		win_triggers = [phrase for phrase in csv.reader(phrases_csv)]
+		win_triggers = [phrase[0] for phrase in csv.reader(phrases_csv)]
 
 	winner_related_tweets = identifyAwardWinners(award_bins, win_triggers) #Returns a award_bins that contain only tweets filtered to be related to the winners of that award
 	blacklist = ["Golden", "Globes", "SeriesTV", "TVSeries", "Series", "TV", "Congrats", "Congratulations", "Movie", "Limited"]
-	entity_frequencies = {}
-	for award in winner_related_tweets:
-		entity_frequencies[award] = Counter()
-		for tweet in winner_related_tweets[award]:
-			entity_frequencies[award].update([canonicalize(entity, entities) for entity in tweet.entities])
-	print entity_frequencies
-	save(entities, 'entities.dat')
 
-	winners = decideWinners(entity_frequencies)
+	nominee_related_tweets = seperateWinnersNominees(award_bins, winner_related_tweets)
+
+
+	####Count Frequencies in winner entities ####
+	winner_entity_frequencies = {}
+	for award in winner_related_tweets:
+		winner_entity_frequencies[award] = Counter()
+		for tweet in winner_related_tweets[award]:
+			winner_entity_frequencies[award].update([canonicalize(entity, winner_entities) for entity in tweet.entities])
+	#print winner_entity_frequencies
+	save(winner_entities, 'winner_entities.dat')
+
+	nominee_entity_frequencies = {}
+	for award in nominee_related_tweets:
+		nominee_entity_frequencies[award] = Counter()
+		for tweet in nominee_related_tweets[award]:
+			nominee_entity_frequencies[award].update([canonicalize(entity, nominee_entities) for entity in tweet.entities])
+	#print nominee_entity_frequencies
+	save(nominee_entities, 'nominee_entities.dat')
+
+	winners = decideWinners(winner_entity_frequencies)
 	for award in winners:
 		print ' '.join(award),": " ,winners[award]
+	print "\n\n\n\n\n\n\n"
+
+
+	nominees = decideNominees(nominee_entity_frequencies)
+	for award in nominees:
+		print ' '.join(award),": " ,nominees[award]
+
 
 	#return entity_frequencies
+def decideNominees(nominee_entity_frequencies):
+	orderedNomineeKeys = {}
+	for award in nominee_entity_frequencies:
+		orderedNomineeKeys[award] = [sorted(nominee_entity_frequencies[award], key=nominee_entity_frequencies[award].get, reverse=True), sum(nominee_entity_frequencies[award].values()) - nominee_entity_frequencies[award][None] + 1]
+
+	nominees = {}
+
+	for award in orderedNomineeKeys:
+		nominees[award] = []
+		for key in orderedNomineeKeys[award][0]:
+			if (float(nominee_entity_frequencies[award][key])/float(orderedNomineeKeys[award][1])) > .1:
+				nominees[award].append([key, nominee_entity_frequencies[award][key], orderedNomineeKeys[award][1]])  
+
+	return nominees
+
 def decideWinners(entity_frequencies):
 	winners = {}
 	for award in entity_frequencies:
