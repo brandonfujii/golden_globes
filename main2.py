@@ -10,7 +10,7 @@ from corpus import *
 from util import *
 import pickle, os
 import csv
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, OrderedDict
 from nltk.corpus import wordnet as wn
 from nltk.tag import pos_tag
 import wikipedia as wiki
@@ -120,13 +120,14 @@ def decideNominees(nominee_entity_frequencies):
 
 
 def filterNominees(nominees):
-	triggers = {
-		"actor" : ["actor"],
-		"actress" : ["actress"],
-		"film" : ["film", "movie"],
-		"tv" : ["tv", "television", "show"],
-		"series" : ["miniseries", "series", 'mini-series']
-	}
+	# triggers = {
+	# 	"actor" : ["actor"],
+	# 	"actress" : ["actress"],
+	# 	"film" : ["film", "movie"],
+	# 	"tv" : ["tv", "television", "show"],
+	# 	"series" : ["miniseries", "series", 'mini-series']
+	# }
+	triggers = OrderedDict([('actor', ["actor"]) , ("actress" , ["actress"]) , ("film" , ["film", "movie"]) , ("tv" , ["tv", "television", "show"]) , ("series" , ["miniseries", "series", 'mini-series'])])
 	
 	new_nominees = {}
 	for award in nominees:
